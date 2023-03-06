@@ -26,8 +26,8 @@ spring:
       max-request-size: 10MB
   mail:
     host: smtp.163.com
-    username: ??
-    password: ??
+    username: peng
+    password: peng
     properties:
       mail:
         smtp:
