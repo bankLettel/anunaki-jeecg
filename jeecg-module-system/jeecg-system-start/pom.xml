@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>jeecg-system-start</artifactId>
-    
+
     <dependencies>
         <!-- SYSTEM 系统管理模块 -->
         <dependency>
@@ -28,11 +28,120 @@
 
     <build>
         <plugins>
+            <!--https://www.cnblogs.com/niceyoo/p/14083706.html-->
+            <!-- 1、编译出不带 lib 文件夹的Jar包 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <!--                <version>${spring.boot.version}</version>-->
+                <configuration>
+                    <finalName>${project.artifactId}-${project.version}</finalName>
+                    <!--表示编译版本配置有效-->
+                    <fork>true</fork>
+                    <!--引入第三方jar包时,不添加则引入的第三方jar不会被打入jar包中-->
+                    <includeSystemScope>true</includeSystemScope>
+                    <!--排除第三方jar文件-->
+                    <includes>
+                        <include>
+                            <groupId>nothing</groupId>
+                            <artifactId>nothing</artifactId>
+                        </include>
+                    </includes>
+                    <!-- https://www.jianshu.com/p/a2cf2336a48c
+                        SpringBoot是通过org.springframework.boot.loader.Launcher类来启动的
+                        这个类有三个子类，分别是JarLauncher,WarLauncher,PropertiesLauncher,
+                        前两个Launcher都是不能添加外部依赖的。只有PropertiesLauncher是可以的。
+                        于是在spring-boot-maven-plugin中添加layout属性
+
+                        https://blog.csdn.net/taiyangdao/article/details/75303181
+                        JAR，即通常的可执行jar
+                        Main-Class: org.springframework.boot.loader.JarLauncher
+                        ZIP，即DIR，类似于JAR
+                        Main-Class: org.springframework.boot.loader.PropertiesLauncher
+                    -->
+                    <mainClass>org.jeecg.JeecgSystemApplication</mainClass>
+                    <layout>ZIP</layout>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
+
+            <!-- 2、将所有依赖的jar文件复制到target/lib目录 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <!--                <version>${apache.maven.plugins.version}</version>-->
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <!--复制到哪个路径，${project.build.directory} 缺醒为 target，其他内置参数见下面解释-->
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <!-- 不要打入 -->
+                            <!--                            <excludeArtifactIds>insight-resources</excludeArtifactIds>-->
+                            <excludeScope>test</excludeScope>
+                            <excludeScope>provided</excludeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- 3、指定启动类，指定配置文件，将依赖打成外部jar包 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <!--资源文件不打进jar包中，做到配置跟项目分离的效果-->
+                    <excludes>
+                        <!-- 业务jar中过滤application.properties/yml文件，在jar包外控制 -->
+                        <exclude>*.properties</exclude>
+                        <exclude>*.xml</exclude>
+                        <exclude>*.yml</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>target/config</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>target/classes</directory>
+                                    <includes>
+                                        <include>**/*.yaml</include>
+                                        <include>**/*.yml</include>
+                                        <include>**/*.xml</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
+
     </build>
 
 </project>

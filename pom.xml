@@ -393,7 +393,7 @@
 			<url>http://maven.jeecg.com:8090/nexus/content/repositories/snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
-	
+
     <!-- 环境 -->
     <profiles>
         <!-- 开发 -->
@@ -438,5 +438,17 @@
 				<module>jeecg-server-cloud</module>
 			</modules>
 		</profile>
+		<profile>
+            <id>central-maven</id>
+            <repositories>
+                <repository>
+                    <id>central</id>
+                    <url>https://repo1.maven.org/maven2/</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                </repository>
+            </repositories>
+        </profile>
     </profiles>
 </project>
